@@ -49,7 +49,7 @@ CheckElectronicsFailure: function(){
 IncomingDamage: function(count){
   var json = {
       "damage":{
-      "11":"Crew Injury",
+      "11":"Crew",
       "12":"Port Wing",
       "13":"Starboard Wing",
       "14":"FuB1 2F",
@@ -64,7 +64,7 @@ IncomingDamage: function(count){
       "31":"Starboard Engine ",
       "32":"Minor Dam",
       "33":"Airframe",
-      "34":"Crew Injury",
+      "34":"Crew",
       "35":"Airframe",
       "36":"Controls",
       "41":"Secondary Radar",
@@ -81,14 +81,14 @@ IncomingDamage: function(count){
       "56":"Rear Guns",
       "61":"Main Radar",
       "62":"Schlage Music",
-      "63":"Crew Injury",
+      "63":"Crew",
       "64":"Forward Weapons",
       "65":"Airframe",
       "66":"Fuel Tank"
       }
    };
    
-    var results = 'You took damage to your ';
+    var results = '';
     for (var i=0; i<count; i++){
         const roll1 = parseInt(RollResult(1,6));
         const roll2 = parseInt(RollResult(1,6));

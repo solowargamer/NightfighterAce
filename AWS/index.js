@@ -1,16 +1,127 @@
+/*
+TODO: 
+
+- crew  - who and what type?
+- aim +1 for damage
+- bomb door explosion
+- bomber loss to dmg
+
+*/
+
 /* eslint-disable  func-names */
 /* eslint-disable  no-console */
 const Alexa = require('ask-sdk');
 var t = require('./charts');
+
+const ResetAllVariablesHandler = {
+  canHandle(handlerInput) {
+    return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+      && handlerInput.requestEnvelope.request.intent.name === 'ResetAllVariables';
+  },
+  async handle(handlerInput) {
+    
+    try {
+      const attributesManager = handlerInput.attributesManager;
+      const attributes = await attributesManager.getPersistentAttributes() || {};
+      attributes.month = 'August';
+      attributes.moon = 'none';
+      attributes.radar = 0;
+      attributes.FuG227 = '';
+      attributes.radarSkill = '';
+      attributes.planeDamage = '';
+      attributesManager.setPersistentAttributes(attributes);
+      await attributesManager.savePersistentAttributes();
+    } catch (e) { }
+    
+    let speak = `All variables are now reset to defaults`;
+    return handlerInput.responseBuilder
+      .speak(speak)
+      .reprompt(speak)
+      .withShouldEndSession(false)
+      .getResponse();
+  },
+};
+
+const LandingPlaneHandler = {
+  canHandle(handlerInput) {
+    return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+      && handlerInput.requestEnvelope.request.intent.name === 'LandingPlane';
+  },
+  async handle(handlerInput) {
+    
+    var planeDamage = '';
+    try {
+        const attributesManager = handlerInput.attributesManager;
+        const attributes = await attributesManager.getPersistentAttributes() || {};
+        planeDamage = attributes.planeDamage;
+    } catch (e) {}
+    
+    let speak = `You are now landing your plane. `;
+    
+    if (planeDamage){
+       planeDamage = planeDamage.replace('null','');
+       speak += ` with damage to your ` + planeDamage; 
+        if (planeDamage.indexOf('Controls') > -1)
+            iLandingRoll += 1;
+        if (planeDamage.indexOf('Engine') > -1)
+            iLandingRoll += 1;
+        if (planeDamage.indexOf('Landing') > -1)
+            iLandingRoll += 1;
+    }
+
+    let iLandingRoll = t.RollResult(2,6);
+
+    return handlerInput.responseBuilder
+      .speak(speak)
+      .reprompt(speak)
+      .withShouldEndSession(false)
+      .getResponse();
+  },
+};
+
+const ApproachDistanceHandler = {
+  canHandle(handlerInput) {
+    return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+      && handlerInput.requestEnvelope.request.intent.name === 'ApproachDistance';
+  },
+  async handle(handlerInput) {
+    const distance = handlerInput.requestEnvelope.request.intent.slots.distance.value;
+    
+    try {
+        const attributesManager = handlerInput.attributesManager;
+        const attributes = await attributesManager.getPersistentAttributes() || {};
+        attributes.distance = distance;
+        attributesManager.setPersistentAttributes(attributes);
+        await attributesManager.savePersistentAttributes();
+    } catch (e) {}
+    
+    const speak = `You are now approaching from ` + distance + ` distance.  Check speed differences, and if still in range, draw two cards and attack.`;
+    return handlerInput.responseBuilder
+      .speak(speak)
+      .reprompt(speak)
+      .withShouldEndSession(false)
+      .getResponse();
+  },
+};
 
 const TookDamageHandler = {
   canHandle(handlerInput) {
     return handlerInput.requestEnvelope.request.type === 'IntentRequest'
       && handlerInput.requestEnvelope.request.intent.name === 'TookDamage';
   },
-   handle(handlerInput) {
+   async handle(handlerInput) {
     const count = handlerInput.requestEnvelope.request.intent.slots.damage.value;
     var dmg = t.IncomingDamage(parseInt(count));
+    
+    try {
+        const attributesManager = handlerInput.attributesManager;
+        const attributes = await attributesManager.getPersistentAttributes() || {};
+        attributes.planeDamage += dmg;
+        attributesManager.setPersistentAttributes(attributes);
+        await attributesManager.savePersistentAttributes();
+    } catch (e) {}
+
+    dmg = `You took damage to your ` + dmg;
     return handlerInput.responseBuilder
       .speak(dmg)
       .reprompt(dmg)
@@ -25,9 +136,16 @@ const AttackingBomberHandler = {
       && handlerInput.requestEnvelope.request.intent.name === 'AttackingBomber';
   },
   async handle(handlerInput) {
+    var distance = 'long';
+    try {
+        const attributesManager = handlerInput.attributesManager;
+        const attributes = await attributesManager.getPersistentAttributes() || {};
+        distance = attributes.distance;
+    } catch (e) {}
+
     let target = handlerInput.requestEnvelope.request.intent.slots.target.value;
     const attackType = handlerInput.requestEnvelope.request.intent.slots.attackType.value;
-    let speechText = `You attack the bomber on his ${target} with a ${attackType}. Damaging his `;
+    let speechText = `Approaching from ` + distance + ` range, you attack the bomber on his ${target} with a ${attackType}. Damaging his `;
     
     const originalTarget = target;
     if (target === 'gunner' || target === 'airframe')
@@ -37,25 +155,117 @@ const AttackingBomberHandler = {
     var sEngine = 'Outward'
     if (iRoll < 4)
         sEngine = 'Inward '
+    
+    var iRandomAttacks = 0;
 
     if (attackType === 'group'){
         if (originalTarget === 'gunner'){ // random x2
             speechText += ` controls, <break time="300ms"/> airframe, <break time="300ms"/> gunner, <break time="300ms"/> `;
-            speechText += t.GetRandomBomberDamage(target, 2);
+            iRandomAttacks = 2;
+            if (distance === 'long')
+                iRandomAttacks --;
+            else if (distance === 'short')
+                iRandomAttacks ++;
+            speechText += t.GetRandomBomberDamage(target, iRandomAttacks);
         }
         if (originalTarget === 'airframe'){ // random x3
             speechText += ` controls, <break time="300ms"/> airframe, <break time="300ms"/> gunner, <break time="300ms"/> `;
-            speechText += t.GetRandomBomberDamage(target, 3);
+            iRandomAttacks = 3;
+            if (distance === 'long')
+                iRandomAttacks --;
+            else if (distance === 'short')
+                iRandomAttacks ++;
+            speechText += t.GetRandomBomberDamage(target, iRandomAttacks);
         }
         if (originalTarget === 'wing'){ // random x1
             speechText += ` controls, <break time="300ms"/> ` + sEngine + ` engine, <break time="300ms"/> wing and <break time="300ms"/> `;
-            speechText += t.GetRandomBomberDamage(target, 1);
+            if (distance === 'medium')
+                iRandomAttacks = 1;
+            else if (distance ==='short')
+                iRandomAttacks = 2;
+            speechText += t.GetRandomBomberDamage(target, iRandomAttacks);
         }
     } else {
         try {
             const iX = parseInt(attackType);
             speechText += t.GetRandomBomberDamage(target, iX);
         } catch (e) {}
+    }
+
+    const finalSpeak = `<speak> ` + speechText + ` </speak>`
+
+    try {
+        const attributesManager = handlerInput.attributesManager;
+        const attributes = await attributesManager.getPersistentAttributes() || {};
+        attributes.lastStatus = finalSpeak;
+        attributesManager.setPersistentAttributes(attributes);
+        await attributesManager.savePersistentAttributes();
+    } catch (e) {}
+
+    return handlerInput.responseBuilder
+      .speak(speechText)
+      .reprompt(speechText)
+      .withShouldEndSession(false)
+      .getResponse();
+  },
+};
+
+const MusicAttackHandler = {
+  canHandle(handlerInput) {
+    return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+      && handlerInput.requestEnvelope.request.intent.name === 'MusicAttack';
+  },
+  async handle(handlerInput) {
+    var distance = 'medium';
+    try {
+        const attributesManager = handlerInput.attributesManager;
+        const attributes = await attributesManager.getPersistentAttributes() || {};
+        distance = attributes.distance;
+    } catch (e) {}
+
+    if (distance === 'long'){
+        return handlerInput.responseBuilder
+          .speak(`You are not allowed to music attack at long range.  Please adjust your range, and tell me your new decision`)
+          .reprompt(`You are not allowed to music attack at long range.  Please adjust your range, and tell me your new decision`)
+          .withShouldEndSession(false)
+          .getResponse();
+    }
+
+    const attackType = handlerInput.requestEnvelope.request.intent.slots.attackType.value;
+    let speechText = `Approaching from ` + distance + ` range, you attack the bomber on his wing with a ${attackType}. 
+        Damaging his fuel tanks, <break time="300ms"/> `;
+    
+    const iRoll = t.RollResult(1,6);
+    var sEngine = 'Outward'
+    if (iRoll < 4)
+        sEngine = 'Inward '
+    
+    var iRandomAttacks = 0;
+
+    // You're only allowed to attack the wing with MUSICK
+    // And you score a fuel tank hit for free!
+    if (attackType === 'group'){
+        speechText += ` controls, <break time="300ms"/> ` + 
+            sEngine + ` engine, <break time="300ms"/> wing and <break time="300ms"/> `;
+        if (distance === 'medium')
+            iRandomAttacks = 1;
+        else if (distance ==='short')
+            iRandomAttacks = 2;
+        speechText += t.GetRandomBomberDamage('wing', iRandomAttacks);
+    } else {
+        try {
+            const iX = parseInt(attackType);
+            speechText += t.GetRandomBomberDamage('wing', iX);
+        } catch (e) {}
+    }
+
+    if (distance === 'short'){
+        const iRollMusic = parseInt(t.RollResult(2,6));
+        const iMyDmg = parseInt(t.RollResult(1,6));
+        if (iRollMusic === 2 || iRollMusic === 12){
+            const dmg = t.IncomingDamage(parseInt(iMyDmg));
+            speechText += ` <break time="300ms"/> Due to being close range, ` + dmg + `. `;
+        }
     }
 
     const finalSpeak = `<speak> ` + speechText + ` </speak>`
@@ -124,7 +334,7 @@ const InterceptCheckHandler = {
         iRoll = 1;
 
     // Added for testing    
-    iRoll = 10;
+    // iRoll = 10;
     
     switch(iRoll){
       case 1: speak = "You are unsure of your location.  This endurance box and next have no contacts. ";
@@ -157,10 +367,8 @@ const RadarSetupHandler = {
     const currRadar = handlerInput.requestEnvelope.request.intent.slots.radar.value;
     let speechText = `Working radar is now ${currRadar}.`;
 
-    // Get DB session attributes
     const attributesManager = handlerInput.attributesManager;
     const attributes = await attributesManager.getPersistentAttributes() || {};
-    // Save entry
     attributes.radar = currRadar;
     attributesManager.setPersistentAttributes(attributes);
     await attributesManager.savePersistentAttributes();
@@ -181,10 +389,8 @@ const CurrentMonthHandler = {
     const currMonth = handlerInput.requestEnvelope.request.intent.slots.month.value;
     let speechText = `Current month is now ${currMonth}.`;
 
-    // Get DB session attributes
     const attributesManager = handlerInput.attributesManager;
     const attributes = await attributesManager.getPersistentAttributes() || {};
-    // Save entry
     attributes.month = currMonth;
     attributesManager.setPersistentAttributes(attributes);
     await attributesManager.savePersistentAttributes();
@@ -329,8 +535,29 @@ const GainedRadarSkillHandler = {
     attributesManager.setPersistentAttributes(attributes);
     await attributesManager.savePersistentAttributes();
 
+    const speak = `Congratulations, you have now acquired the radar skill.`;
     return handlerInput.responseBuilder
-      .speak(`Congratulations, you have now acquired the radar skill.`)
+      .speak(speak)
+      .withShouldEndSession(false)
+      .getResponse();
+  },
+};
+
+const GainedAimSkillHandler = {
+  canHandle(handlerInput) {
+    return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+      && handlerInput.requestEnvelope.request.intent.name === 'GainedAimSkill';
+  },
+  async handle(handlerInput) {
+    const attributesManager = handlerInput.attributesManager;
+    const attributes = await attributesManager.getPersistentAttributes() || {};
+    attributes.aimSkill = 'yes';
+    attributesManager.setPersistentAttributes(attributes);
+    await attributesManager.savePersistentAttributes();
+
+    const speak = `Congratulations, you have now acquired the aim skill. That's plus 1 random damage!`;
+    return handlerInput.responseBuilder
+      .speak(speak)
       .withShouldEndSession(false)
       .getResponse();
   },
@@ -409,18 +636,23 @@ const skillBuilder = Alexa.SkillBuilders.standard();
 
 exports.handler = skillBuilder
   .addRequestHandlers(
-    LaunchRequestHandler,
-    MoonHandler,
-    StatusHandler,
-    StartGameHandler,
-    RepeatThatHandler,
-    CurrentMonthHandler,
-    RadarSetupHandler,
-    RepeatThatHandler,
+    ApproachDistanceHandler,
     AttackingBomberHandler,
-    TookDamageHandler,
+    CurrentMonthHandler,
+    GainedAimSkillHandler,
     GainedRadarSkillHandler,
     InterceptCheckHandler,
+    LandingPlaneHandler,
+    MoonHandler,
+    MusicAttackHandler,
+    RadarSetupHandler,
+    RepeatThatHandler,
+    ResetAllVariablesHandler,
+    StartGameHandler,
+    StatusHandler,
+    TookDamageHandler,
+
+    LaunchRequestHandler,
     HelpIntentHandler,
     CancelAndStopIntentHandler,
     SessionEndedRequestHandler
