@@ -1,0 +1,411 @@
+{
+    "interactionModel": {
+        "languageModel": {
+            "invocationName": "fighter ace",
+            "intents": [
+                {
+                    "name": "AMAZON.FallbackIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.CancelIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.HelpIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.StopIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.NavigateHomeIntent",
+                    "samples": []
+                },
+                {
+                    "name": "StartGame",
+                    "slots": [],
+                    "samples": [
+                        "start next pass",
+                        "start another round",
+                        "start next round",
+                        "start the game"
+                    ]
+                },
+                {
+                    "name": "MoonState",
+                    "slots": [
+                        {
+                            "name": "moontype",
+                            "type": "MoonType",
+                            "samples": [
+                                "none",
+                                "bright",
+                                "half",
+                                "full",
+                                "dark"
+                            ]
+                        }
+                    ],
+                    "samples": [
+                        "moon is {moontype}",
+                        "moon is now {moontype}"
+                    ]
+                },
+                {
+                    "name": "StatusRequest",
+                    "slots": [],
+                    "samples": [
+                        "what is my status"
+                    ]
+                },
+                {
+                    "name": "CurrentMonth",
+                    "slots": [
+                        {
+                            "name": "month",
+                            "type": "AMAZON.Month"
+                        }
+                    ],
+                    "samples": [
+                        "we are now in {month}",
+                        "current month is {month}"
+                    ]
+                },
+                {
+                    "name": "RepeatThat",
+                    "slots": [],
+                    "samples": [
+                        "what was that",
+                        "please repeat",
+                        "repeat that"
+                    ]
+                },
+                {
+                    "name": "InterceptCheck",
+                    "slots": [],
+                    "samples": [
+                        "any bombers",
+                        "find bombers",
+                        "check for bombers",
+                        "check for planes",
+                        "conduct a sortie",
+                        "check for interception"
+                    ]
+                },
+                {
+                    "name": "RadarSetup",
+                    "slots": [
+                        {
+                            "name": "radar",
+                            "type": "AMAZON.NUMBER"
+                        }
+                    ],
+                    "samples": [
+                        "radar is now {radar}",
+                        "radar is {radar}",
+                        "my radar is now {radar}"
+                    ]
+                },
+                {
+                    "name": "AttackingBomber",
+                    "slots": [
+                        {
+                            "name": "target",
+                            "type": "AttackTarget"
+                        },
+                        {
+                            "name": "attackType",
+                            "type": "AttackType"
+                        }
+                    ],
+                    "samples": [
+                        "attacking bomber on his {target} with {attackType}",
+                        "attacking {target} with {attackType}"
+                    ]
+                },
+                {
+                    "name": "TookDamage",
+                    "slots": [
+                        {
+                            "name": "damage",
+                            "type": "AMAZON.NUMBER"
+                        }
+                    ],
+                    "samples": [
+                        "i got hit for {damage} damage",
+                        "my plane took {damage} damage",
+                        "I took {damage} damage"
+                    ]
+                },
+                {
+                    "name": "ApproachDistance",
+                    "slots": [
+                        {
+                            "name": "distance",
+                            "type": "AttackRange"
+                        }
+                    ],
+                    "samples": [
+                        "coming in from {distance}",
+                        "approaching from {distance}",
+                        "approach from {distance}",
+                        "approaching from {distance} range"
+                    ]
+                },
+                {
+                    "name": "MusicAttack",
+                    "slots": [
+                        {
+                            "name": "attackType",
+                            "type": "AttackType"
+                        }
+                    ],
+                    "samples": [
+                        "music attack with {attackType}",
+                        "music attacking with {attackType}"
+                    ]
+                },
+                {
+                    "name": "ExtendedBurstAttack",
+                    "slots": [
+                        {
+                            "name": "target",
+                            "type": "AttackTarget"
+                        },
+                        {
+                            "name": "attackType",
+                            "type": "AttackType"
+                        }
+                    ],
+                    "samples": [
+                        "burst attacking his {target} with {attackType}",
+                        "extended burst on his {target} with {attackType}"
+                    ]
+                },
+                {
+                    "name": "LandingPlane",
+                    "slots": [],
+                    "samples": [
+                        "coming in for a landing",
+                        "landing my plane",
+                        "i am now landing the plane"
+                    ]
+                },
+                {
+                    "name": "ResetAllVariables",
+                    "slots": [],
+                    "samples": [
+                        "reset my game",
+                        "reset all variables",
+                        "reset everything"
+                    ]
+                },
+                {
+                    "name": "BomberStream",
+                    "slots": [],
+                    "samples": [
+                        "continuing bomber stream",
+                        "I'm in the bomber stream",
+                        "doing bomber stream",
+                        "bomber stream",
+                        "entering bomber stream"
+                    ]
+                },
+                {
+                    "name": "BomberDestroyed",
+                    "slots": [],
+                    "samples": [
+                        "bomber is now destroyed",
+                        "bomber is dead",
+                        "bomber is destroyed",
+                        "bomber has been destroyed"
+                    ]
+                },
+                {
+                    "name": "MakingAnotherPass",
+                    "slots": [],
+                    "samples": [
+                        "trying another pass",
+                        "making another pass"
+                    ]
+                },
+                {
+                    "name": "NoRadarPresent",
+                    "slots": [],
+                    "samples": [
+                        "i have no radar",
+                        "i have no working radar",
+                        "my radar is broken"
+                    ]
+                },
+                {
+                    "name": "JammingModifier",
+                    "slots": [
+                        {
+                            "name": "jamming",
+                            "type": "AMAZON.NUMBER"
+                        }
+                    ],
+                    "samples": [
+                        "jamming is now {jamming}"
+                    ]
+                }
+            ],
+            "types": [
+                {
+                    "name": "MoonType",
+                    "values": [
+                        {
+                            "name": {
+                                "value": "half"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "bright"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "dark"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "none"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "full"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "AttackTarget",
+                    "values": [
+                        {
+                            "name": {
+                                "value": "airframe"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "gunner"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "wing"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "AttackType",
+                    "values": [
+                        {
+                            "name": {
+                                "value": "7"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "6"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "5"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "4"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "3"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "2"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "1"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "0"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "group"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "AttackRange",
+                    "values": [
+                        {
+                            "name": {
+                                "value": "long"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "medium"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "close"
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        "dialog": {
+            "intents": [
+                {
+                    "name": "MoonState",
+                    "confirmationRequired": false,
+                    "prompts": {},
+                    "slots": [
+                        {
+                            "name": "moontype",
+                            "type": "MoonType",
+                            "confirmationRequired": false,
+                            "elicitationRequired": true,
+                            "prompts": {
+                                "elicitation": "Elicit.Slot.560682555105.883521247380"
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        "prompts": [
+            {
+                "id": "Elicit.Slot.560682555105.883521247380",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "What type of moon is it"
+                    }
+                ]
+            }
+        ]
+    }
+}

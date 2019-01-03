@@ -7,10 +7,21 @@ function RollResult(iNum, iSides) {
 
 module.exports = {
 
+CheckFuelHit: function(){
+  var i = parseInt(RollResult(2,6));
+  if (i < 8)
+    return " The fuel tank hit results in leaking. The plane must land after combat. ";
+  else if (i === 12)
+    return " The fuel tank hit results in an explosion. The crew has died. ";
+  else if (i > 7)
+    return " The fuel tank hit results in a fire.  The crew must bail out. ";
+},
+
 CheckSpoofRaids: function(){
   var i = RollResult(2,6);
   switch(i){
-    case 10,11: return "Spoof Raid! Lose 1 endurance box. ";
+    case 10:
+    case 11: return "Spoof Raid! Lose 1 endurance box. ";
     case 12: return "Spoof Raid! Lose 2 endurance boxes. ";
     default: return "";
   }
@@ -62,7 +73,7 @@ IncomingDamage: function(count){
       "25":"Port Engine",
       "26":"Controls",
       "31":"Starboard Engine ",
-      "32":"Minor Dam",
+      "32":"Minor Damage",
       "33":"Airframe",
       "34":"Crew",
       "35":"Airframe",

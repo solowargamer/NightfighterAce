@@ -1,10 +1,7 @@
 /*
 TODO: 
 
-- crew  - who and what type?
-- aim +1 for damage
-- bomb door explosion
-- bomber loss to dmg
+- Mesquito special combat
 
 */
 
@@ -13,27 +10,93 @@ TODO:
 const Alexa = require('ask-sdk');
 var t = require('./charts');
 
-const ResetAllVariablesHandler = {
+const JammingModifierHandler = {
   canHandle(handlerInput) {
     return handlerInput.requestEnvelope.request.type === 'IntentRequest'
-      && handlerInput.requestEnvelope.request.intent.name === 'ResetAllVariables';
+      && handlerInput.requestEnvelope.request.intent.name === 'JammingModifier';
   },
   async handle(handlerInput) {
-    
+    const jamming = handlerInput.requestEnvelope.request.intent.slots.jamming.value;
+    let speak = `Your jamming is now ${jamming}, which will affect finding bombers. `;
+
     try {
-      const attributesManager = handlerInput.attributesManager;
-      const attributes = await attributesManager.getPersistentAttributes() || {};
-      attributes.month = 'August';
-      attributes.moon = 'none';
-      attributes.radar = 0;
-      attributes.FuG227 = '';
-      attributes.radarSkill = '';
-      attributes.planeDamage = '';
-      attributesManager.setPersistentAttributes(attributes);
-      await attributesManager.savePersistentAttributes();
-    } catch (e) { }
-    
-    let speak = `All variables are now reset to defaults`;
+        const attributesManager = handlerInput.attributesManager;
+        const attributes = await attributesManager.getPersistentAttributes() || {};
+        attributes.jamming = jamming;
+        attributesManager.setPersistentAttributes(attributes);
+        await attributesManager.savePersistentAttributes();
+    } catch (e) {}
+
+    return handlerInput.responseBuilder
+      .speak(speak)
+      .reprompt(speak)
+      .withShouldEndSession(false)
+      .getResponse();
+  },
+};
+
+const NoRadarPresentHandler = {
+  canHandle(handlerInput) {
+    return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+      && handlerInput.requestEnvelope.request.intent.name === 'NoRadarPresent';
+  },
+  async handle(handlerInput) {
+    let speak = `Your radars are now broken, which will affect finding bombers. `;
+
+    try {
+        const attributesManager = handlerInput.attributesManager;
+        const attributes = await attributesManager.getPersistentAttributes() || {};
+        attributes.noradar = 'yes';
+        attributesManager.setPersistentAttributes(attributes);
+        await attributesManager.savePersistentAttributes();
+    } catch (e) {}
+
+    return handlerInput.responseBuilder
+      .speak(speak)
+      .reprompt(speak)
+      .withShouldEndSession(false)
+      .getResponse();
+  },
+};
+
+const BomberDestroyedHandler = {
+  canHandle(handlerInput) {
+    return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+      && handlerInput.requestEnvelope.request.intent.name === 'BomberDestroyed';
+  },
+  async handle(handlerInput) {
+    let speak = `The bomber explodes in a burst of flames and metal.  Mark another kill on your sheet. `;
+
+    try {
+        const attributesManager = handlerInput.attributesManager;
+        const attributes = await attributesManager.getPersistentAttributes() || {};
+        attributes.corkscrew = '';
+        attributesManager.setPersistentAttributes(attributes);
+        await attributesManager.savePersistentAttributes();
+    } catch (e) {}
+
+    return handlerInput.responseBuilder
+      .speak(speak)
+      .reprompt(speak)
+      .withShouldEndSession(false)
+      .getResponse();
+  },
+};
+
+const MakingAnotherPassHandler = {
+  canHandle(handlerInput) {
+    return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+      && handlerInput.requestEnvelope.request.intent.name === 'MakingAnotherPass';
+  },
+  async handle(handlerInput) {
+    let speak = `You attempt to make another pass, and `;
+    const iPassRoll = parseInt(t.RollResult(1,6));
+    // "making another pass" - corkscrew 1d^ 1-2 means he got away
+    if (iPassRoll < 3)
+      speak += ` the bomber disappears into the night.  You lost him. `;
+    else
+      speak += ` you are successful.  Line up your sights, and fire again. `;
+
     return handlerInput.responseBuilder
       .speak(speak)
       .reprompt(speak)
@@ -57,20 +120,54 @@ const LandingPlaneHandler = {
     } catch (e) {}
     
     let speak = `You are now landing your plane. `;
-    
+    let iLandingRoll = parseInt(t.RollResult(2,6));
+
     if (planeDamage){
        planeDamage = planeDamage.replace('null','');
        speak += ` with damage to your ` + planeDamage; 
-        if (planeDamage.indexOf('Controls') > -1)
-            iLandingRoll += 1;
-        if (planeDamage.indexOf('Engine') > -1)
-            iLandingRoll += 1;
-        if (planeDamage.indexOf('Landing') > -1)
-            iLandingRoll += 1;
     }
+    
+    speak += `. You rolled a ` + iLandingRoll.toString() + ` for landing.  Add modifiers according to B7 chart`;
+    const finalSpeak = `<speak> ` + speak + ` </speak>`
 
-    let iLandingRoll = t.RollResult(2,6);
+    try {
+        const attributesManager = handlerInput.attributesManager;
+        const attributes = await attributesManager.getPersistentAttributes() || {};
+        attributes.lastStatus = finalSpeak;
+        attributes.planeDamage = '';
+        attributesManager.setPersistentAttributes(attributes);
+        await attributesManager.savePersistentAttributes();
+    } catch (e) {}
 
+    return handlerInput.responseBuilder
+      .speak(speak)
+      .reprompt(speak)
+      .withShouldEndSession(false)
+      .getResponse();
+  },
+};
+
+const ResetAllVariablesHandler = {
+  canHandle(handlerInput) {
+    return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+      && handlerInput.requestEnvelope.request.intent.name === 'ResetAllVariables';
+  },
+  async handle(handlerInput) {
+    
+    try {
+      const attributesManager = handlerInput.attributesManager;
+      const attributes = await attributesManager.getPersistentAttributes() || {};
+      attributes.month = 'August';
+      attributes.moon = 'none';
+      attributes.radar = 0;
+      attributes.FuG227 = '';
+      attributes.planeDamage = '';
+      attributes.corkscrew = '';
+      attributesManager.setPersistentAttributes(attributes);
+      await attributesManager.savePersistentAttributes();
+    } catch (e) { }
+    
+    let speak = `All variables are now reset to defaults`;
     return handlerInput.responseBuilder
       .speak(speak)
       .reprompt(speak)
@@ -95,7 +192,7 @@ const ApproachDistanceHandler = {
         await attributesManager.savePersistentAttributes();
     } catch (e) {}
     
-    const speak = `You are now approaching from ` + distance + ` distance.  Check speed differences, and if still in range, draw two cards and attack.`;
+    const speak = `You are now approaching from ` + distance + ` range.  Check speed differences, and if still in range, draw two cards and attack.`;
     return handlerInput.responseBuilder
       .speak(speak)
       .reprompt(speak)
@@ -111,7 +208,7 @@ const TookDamageHandler = {
   },
    async handle(handlerInput) {
     const count = handlerInput.requestEnvelope.request.intent.slots.damage.value;
-    var dmg = t.IncomingDamage(parseInt(count));
+    let dmg = t.IncomingDamage(parseInt(count));
     
     try {
         const attributesManager = handlerInput.attributesManager;
@@ -122,6 +219,27 @@ const TookDamageHandler = {
     } catch (e) {}
 
     dmg = `You took damage to your ` + dmg;
+
+    try {
+      if (dmg.indexOf('Crew') !== -1)
+        dmg += ` Check chart B4 for crew injuries. `;
+      if (dmg.indexOf('Oxygen') !== -1)
+        dmg += ` Due to Oxygen damage, you must break off after current pass and land immediately. `;
+      if (dmg.indexOf('Bomb Bay') !== -1)
+        dmg += ` Check chart B4 for possible bomb bay explosion. `;
+      if (dmg.indexOf('Fuel') !== -1)
+        dmg += t.CheckFuelHit() + ` . `;
+    } catch (e) {}
+    
+    const finalSpeak = `<speak> ` + dmg + ` </speak>`
+    try {
+        const attributesManager = handlerInput.attributesManager;
+        const attributes = await attributesManager.getPersistentAttributes() || {};
+        attributes.lastStatus = finalSpeak;
+        attributesManager.setPersistentAttributes(attributes);
+        await attributesManager.savePersistentAttributes();
+    } catch (e) {}
+
     return handlerInput.responseBuilder
       .speak(dmg)
       .reprompt(dmg)
@@ -130,6 +248,9 @@ const TookDamageHandler = {
   },
 };
 
+/************************  STANDARD ATTACK  **********************/
+/************************  STANDARD ATTACK  **********************/
+/************************  STANDARD ATTACK  **********************/
 const AttackingBomberHandler = {
   canHandle(handlerInput) {
     return handlerInput.requestEnvelope.request.type === 'IntentRequest'
@@ -137,15 +258,21 @@ const AttackingBomberHandler = {
   },
   async handle(handlerInput) {
     var distance = 'long';
+    var corkscrew = '';
     try {
         const attributesManager = handlerInput.attributesManager;
         const attributes = await attributesManager.getPersistentAttributes() || {};
         distance = attributes.distance;
+        corkscrew = attributes.corkscrew;
     } catch (e) {}
 
     let target = handlerInput.requestEnvelope.request.intent.slots.target.value;
     const attackType = handlerInput.requestEnvelope.request.intent.slots.attackType.value;
-    let speechText = `Approaching from ` + distance + ` range, you attack the bomber on his ${target} with a ${attackType}. Damaging his `;
+    let speechText = `Approaching from ` + distance + ` range, `;
+    if (corkscrew)
+      if (corkscrew === 'yes')
+        speechText += ` while he corkscrews, `;
+    speechText += `you attack the bomber on his ${target} with a ${attackType}. Damaging his `;
     
     const originalTarget = target;
     if (target === 'gunner' || target === 'airframe')
@@ -164,8 +291,11 @@ const AttackingBomberHandler = {
             iRandomAttacks = 2;
             if (distance === 'long')
                 iRandomAttacks --;
-            else if (distance === 'short')
+            else if (distance === 'close')
                 iRandomAttacks ++;
+            if (corkscrew)
+              if (corkscrew === 'yes')
+                iRandomAttacks --;
             speechText += t.GetRandomBomberDamage(target, iRandomAttacks);
         }
         if (originalTarget === 'airframe'){ // random x3
@@ -173,16 +303,22 @@ const AttackingBomberHandler = {
             iRandomAttacks = 3;
             if (distance === 'long')
                 iRandomAttacks --;
-            else if (distance === 'short')
+            else if (distance === 'close')
                 iRandomAttacks ++;
+            if (corkscrew)
+              if (corkscrew === 'yes')
+                iRandomAttacks --;
             speechText += t.GetRandomBomberDamage(target, iRandomAttacks);
         }
         if (originalTarget === 'wing'){ // random x1
             speechText += ` controls, <break time="300ms"/> ` + sEngine + ` engine, <break time="300ms"/> wing and <break time="300ms"/> `;
             if (distance === 'medium')
                 iRandomAttacks = 1;
-            else if (distance ==='short')
+            else if (distance ==='close')
                 iRandomAttacks = 2;
+            if (corkscrew)
+              if (corkscrew === 'yes')
+                iRandomAttacks --;
             speechText += t.GetRandomBomberDamage(target, iRandomAttacks);
         }
     } else {
@@ -198,6 +334,135 @@ const AttackingBomberHandler = {
         const attributesManager = handlerInput.attributesManager;
         const attributes = await attributesManager.getPersistentAttributes() || {};
         attributes.lastStatus = finalSpeak;
+        attributes.corkscrew = 'yes';
+        attributesManager.setPersistentAttributes(attributes);
+        await attributesManager.savePersistentAttributes();
+    } catch (e) {}
+
+    return handlerInput.responseBuilder
+      .speak(speechText)
+      .reprompt(speechText)
+      .withShouldEndSession(false)
+      .getResponse();
+  },
+};
+
+/************************  EXTENDED BURST ATTACK  **********************/
+/************************  EXTENDED BURST ATTACK  **********************/
+/************************  EXTENDED BURST ATTACK  **********************/
+const ExtendedBurstAttackHandler = {
+  canHandle(handlerInput) {
+    return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+      && handlerInput.requestEnvelope.request.intent.name === 'ExtendedBurstAttack';
+  },
+  async handle(handlerInput) {
+
+    const iBurstRoll = parseInt(t.RollResult(2,6));
+
+    var distance = 'long';
+    var corkscrew = '';
+    try {
+        const attributesManager = handlerInput.attributesManager;
+        const attributes = await attributesManager.getPersistentAttributes() || {};
+        distance = attributes.distance;
+        corkscrew = attributes.corkscrew;
+    } catch (e) {}
+
+    let target = handlerInput.requestEnvelope.request.intent.slots.target.value;
+    const attackType = handlerInput.requestEnvelope.request.intent.slots.attackType.value;
+    let speechText = `Approaching from ` + distance + ` range, `;
+    if (corkscrew)
+      if (corkscrew === 'yes')
+        speechText += ` while he corkscrews, `;
+    speechText += `you attack the bomber on his ${target} with a ${attackType}. Damaging his `;
+    
+    const originalTarget = target;
+    if (target === 'gunner' || target === 'airframe')
+      target = 'other';
+      
+    const iRoll = t.RollResult(1,6);
+    var sEngine = 'Outward'
+    if (iRoll < 4)
+        sEngine = 'Inward '
+    
+    var iRandomAttacks = 0;
+
+    if (attackType === 'group'){
+        if (originalTarget === 'gunner'){ // random x2
+            speechText += ` controls, <break time="300ms"/> airframe, <break time="300ms"/> gunner, <break time="300ms"/> `;
+            iRandomAttacks = 2;
+            if (distance === 'long')
+                iRandomAttacks --;
+            else if (distance === 'close')
+                iRandomAttacks ++;
+            if (corkscrew)
+              if (corkscrew === 'yes')
+                iRandomAttacks --;
+            speechText += t.GetRandomBomberDamage(target, iRandomAttacks);
+        }
+        if (originalTarget === 'airframe'){ // random x3
+            speechText += ` controls, <break time="300ms"/> airframe, <break time="300ms"/> gunner, <break time="300ms"/> `;
+            iRandomAttacks = 3;
+            if (distance === 'long')
+                iRandomAttacks --;
+            else if (distance === 'close')
+                iRandomAttacks ++;
+            if (corkscrew)
+              if (corkscrew === 'yes')
+                iRandomAttacks --;
+            speechText += t.GetRandomBomberDamage(target, iRandomAttacks);
+        }
+        if (originalTarget === 'wing'){ // random x1
+            speechText += ` controls, <break time="300ms"/> ` + sEngine + ` engine, <break time="300ms"/> wing and <break time="300ms"/> `;
+            if (distance === 'medium')
+                iRandomAttacks = 1;
+            else if (distance ==='close')
+                iRandomAttacks = 2;
+            if (corkscrew)
+              if (corkscrew === 'yes')
+                iRandomAttacks --;
+            speechText += t.GetRandomBomberDamage(target, iRandomAttacks);
+        }
+    } else {
+        try {
+            const iX = parseInt(attackType);
+            speechText += t.GetRandomBomberDamage(target, iX);
+        } catch (e) {}
+    }
+
+   switch (iBurstRoll){
+     case 2: 
+       break;
+     case 3: 
+       break;
+     case 4: 
+       break;
+     case 5: 
+       break;
+     case 6: 
+       break;
+     case 7: 
+       break;
+     case 8: 
+       break;
+     case 9: 
+       break;
+     case 10: 
+       break;
+     case 11: 
+       break;
+     case 12: 
+       break;
+   }
+
+
+    const finalSpeak = `<speak> ` + speechText + ` </speak>`
+
+    try {
+        const attributesManager = handlerInput.attributesManager;
+        const attributes = await attributesManager.getPersistentAttributes() || {};
+        attributes.lastStatus = finalSpeak;
+        attributes.corkscrew = 'yes';
         attributesManager.setPersistentAttributes(attributes);
         await attributesManager.savePersistentAttributes();
     } catch (e) {}
@@ -217,10 +482,12 @@ const MusicAttackHandler = {
   },
   async handle(handlerInput) {
     var distance = 'medium';
+    var corkscrew = '';
     try {
         const attributesManager = handlerInput.attributesManager;
         const attributes = await attributesManager.getPersistentAttributes() || {};
         distance = attributes.distance;
+        corkscrew = attributes.corkscrew;
     } catch (e) {}
 
     if (distance === 'long'){
@@ -249,8 +516,11 @@ const MusicAttackHandler = {
             sEngine + ` engine, <break time="300ms"/> wing and <break time="300ms"/> `;
         if (distance === 'medium')
             iRandomAttacks = 1;
-        else if (distance ==='short')
+        else if (distance ==='close')
             iRandomAttacks = 2;
+        if (corkscrew)
+          if (corkscrew === 'yes')
+            iRandomAttacks --;
         speechText += t.GetRandomBomberDamage('wing', iRandomAttacks);
     } else {
         try {
@@ -259,7 +529,7 @@ const MusicAttackHandler = {
         } catch (e) {}
     }
 
-    if (distance === 'short'){
+    if (distance === 'close'){
         const iRollMusic = parseInt(t.RollResult(2,6));
         const iMyDmg = parseInt(t.RollResult(1,6));
         if (iRollMusic === 2 || iRollMusic === 12){
@@ -274,6 +544,7 @@ const MusicAttackHandler = {
         const attributesManager = handlerInput.attributesManager;
         const attributes = await attributesManager.getPersistentAttributes() || {};
         attributes.lastStatus = finalSpeak;
+        attributes.corkscrew = 'yes';
         attributesManager.setPersistentAttributes(attributes);
         await attributesManager.savePersistentAttributes();
     } catch (e) {}
@@ -298,17 +569,28 @@ const InterceptCheckHandler = {
     var moon = 'none';
     var radar = '0';
     var FuG227 = '';
-    var radarSkill = '';
+    var noradar = '';
+    var jamming = 0;
     try {
       const attributesManager = handlerInput.attributesManager;
       const attributes = await attributesManager.getPersistentAttributes() || {};
       month = attributes.month;
       moon = attributes.moon;
       radar = attributes.radar;
+      noradar = attributes.noradar;
       FuG227 = attributes.FuG227;
-      radarSkill = attributes.radarSkill;
+      jamming = attributes.jamming;
     } catch (e) { }
 
+    try {
+        if (jamming)
+          iRoll -= parseInt(jamming);
+    } catch (e) {}
+
+    if (noradar)
+      if (noradar === 'yes')
+        iRoll -= 1;
+        
     if (radar == '0')
       iRoll -= 1;
     if (radar == '1')
@@ -327,24 +609,26 @@ const InterceptCheckHandler = {
     if (moon == 'bright')
       iRoll += 1;
       
-    if (radarSkill == 'yes')
-      iRoll += 1;
-      
     if (iRoll < 1)
         iRoll = 1;
 
-    // Added for testing    
-    // iRoll = 10;
-    
-    switch(iRoll){
+    switch(parseInt(iRoll)){
       case 1: speak = "You are unsure of your location.  This endurance box and next have no contacts. ";
         break;
-      case 9,10: speak = "You intercept a bomber. ";
+      case 9:
+      case 10: speak = "You intercept a bomber. ";
         const bomber = t.GetInterceptTarget(month);
         speak += ` <break time="500ms"/> a ` + bomber + ` <break time="300ms"/> appears out of the darkness.  Place a ` + 
-            bomber + ` <break time="300ms"/> onto your board, and then draw two cards. `
+            bomber + ` <break time="300ms"/> onto your board, and then decide approach distance. `
         break;
-      case 11,12,13,14,15,16: speak = "Bomber stream. ";
+      case 11:
+      case 12:
+      case 13:
+      case 14: speak = "You've entered a bomber stream. After this encounter, say bomber stream to continue your streak. ";
+        speak += "You intercept a bomber. ";
+        const bomber1 = t.GetInterceptTarget(month);
+        speak += ` <break time="500ms"/> a ` + bomber1 + ` <break time="300ms"/> appears out of the darkness.  Place a ` + 
+            bomber1 + ` <break time="300ms"/> onto your board, and then decide approach distance. `
         break;
       default: speak = "Modified roll is " + iRoll.toString() + ". No interception.  Move to next box. ";
     }
@@ -353,6 +637,33 @@ const InterceptCheckHandler = {
 
     return handlerInput.responseBuilder
       .speak(finalSpeak)
+      .withShouldEndSession(false)
+      .getResponse();
+  },
+};
+
+const BomberStreamHandler = {
+  canHandle(handlerInput) {
+    return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+      && handlerInput.requestEnvelope.request.intent.name === 'BomberStream';
+  },
+  async handle(handlerInput) {
+    var iRoll = t.RollResult(1,10);
+    var month = 'August';
+    try {
+      const attributesManager = handlerInput.attributesManager;
+      const attributes = await attributesManager.getPersistentAttributes() || {};
+      month = attributes.month;
+    } catch (e) { }
+
+    let speak = "You've entered a bomber stream. After this encounter, say bomber stream to continue your streak. ";
+    speak += "You intercept a bomber. ";
+    const bomber1 = t.GetInterceptTarget(month);
+    speak += ` <break time="500ms"/> a ` + bomber1 + ` <break time="300ms"/> appears out of the darkness.  Place a ` + 
+        bomber1 + ` <break time="300ms"/> onto your board, and then decide approach distance. `
+
+    return handlerInput.responseBuilder
+      .speak(speak)
       .withShouldEndSession(false)
       .getResponse();
   },
@@ -411,10 +722,8 @@ const MoonHandler = {
     const moon = handlerInput.requestEnvelope.request.intent.slots.moontype.value;
     let speechText = `Moon is now ${moon}.`;
 
-    // Get DB session attributes
     const attributesManager = handlerInput.attributesManager;
     const attributes = await attributesManager.getPersistentAttributes() || {};
-    // Save entry
     attributes.moon = moon;
     attributesManager.setPersistentAttributes(attributes);
     await attributesManager.savePersistentAttributes();
@@ -444,7 +753,7 @@ const StartGameHandler = {
 
     var speak = t.CheckWeather();
     if (speak.indexOf('sock') == -1)
-      speak += `<break time="500ms"/> ` + ` Your fighter is located in ` + t.CheckLocation(month);
+      speak += `<break time="500ms"/> ` + ` Your raid target is ` + t.CheckLocation(month);
     speak += `<break time="500ms"/> ` + t.CheckElectronicsFailure();
     if (speak.indexOf('radar has failed') !== -1)
       radar = 'none';
@@ -457,7 +766,8 @@ const StartGameHandler = {
         attributes.lastStatus = finalSpeak;
         attributes.radar = radar;
         attributes.FuG227 = '';
-        attributes.radarSkill = '';
+        attributes.planeDamage = '';
+        attributes.corkscrew = '';
         attributesManager.setPersistentAttributes(attributes);
         await attributesManager.savePersistentAttributes();
     } catch (e) {}
@@ -486,13 +796,6 @@ const StatusHandler = {
     } catch (e) {}
     try {
         speechText += `You have ${attributes.radar.toString()} working radar. `;
-    } catch (e) {}
-    try {
-        const radar = attributes.radarSkill;
-        if (radar == 'yes')
-            speechText += `You radar skill is activated. `;
-        else
-            speechText += `You have no radar skill. `;
     } catch (e) {}
 
     return handlerInput.responseBuilder
@@ -523,55 +826,13 @@ const RepeatThatHandler = {
   },
 };
 
-const GainedRadarSkillHandler = {
-  canHandle(handlerInput) {
-    return handlerInput.requestEnvelope.request.type === 'IntentRequest'
-      && handlerInput.requestEnvelope.request.intent.name === 'GainedRadarSkill';
-  },
-  async handle(handlerInput) {
-    const attributesManager = handlerInput.attributesManager;
-    const attributes = await attributesManager.getPersistentAttributes() || {};
-    attributes.radarSkill = 'yes';
-    attributesManager.setPersistentAttributes(attributes);
-    await attributesManager.savePersistentAttributes();
-
-    const speak = `Congratulations, you have now acquired the radar skill.`;
-    return handlerInput.responseBuilder
-      .speak(speak)
-      .withShouldEndSession(false)
-      .getResponse();
-  },
-};
-
-const GainedAimSkillHandler = {
-  canHandle(handlerInput) {
-    return handlerInput.requestEnvelope.request.type === 'IntentRequest'
-      && handlerInput.requestEnvelope.request.intent.name === 'GainedAimSkill';
-  },
-  async handle(handlerInput) {
-    const attributesManager = handlerInput.attributesManager;
-    const attributes = await attributesManager.getPersistentAttributes() || {};
-    attributes.aimSkill = 'yes';
-    attributesManager.setPersistentAttributes(attributes);
-    await attributesManager.savePersistentAttributes();
-
-    const speak = `Congratulations, you have now acquired the aim skill. That's plus 1 random damage!`;
-    return handlerInput.responseBuilder
-      .speak(speak)
-      .withShouldEndSession(false)
-      .getResponse();
-  },
-};
-
 const LaunchRequestHandler = {
   canHandle(handlerInput) {
     return handlerInput.requestEnvelope.request.type === 'LaunchRequest';
   },
   handle(handlerInput) {
-    var y = t.RollResult(1,6);
-      
     return handlerInput.responseBuilder
-      .speak(`Welcome to Night Fighter Ace.  You roll ` + y)
+      .speak(`Welcome to Night Fighter Ace.`)
       .withShouldEndSession(false)
       .getResponse();
   },
@@ -631,20 +892,24 @@ const ErrorHandler = {
       .getResponse();
   },
 };
-
+         
 const skillBuilder = Alexa.SkillBuilders.standard();
 
 exports.handler = skillBuilder
   .addRequestHandlers(
     ApproachDistanceHandler,
     AttackingBomberHandler,
+    BomberDestroyedHandler,
+    BomberStreamHandler,
     CurrentMonthHandler,
-    GainedAimSkillHandler,
-    GainedRadarSkillHandler,
+    ExtendedBurstAttackHandler,
     InterceptCheckHandler,
+    JammingModifierHandler,
     LandingPlaneHandler,
+    MakingAnotherPassHandler,
     MoonHandler,
     MusicAttackHandler,
+    NoRadarPresentHandler,
     RadarSetupHandler,
     RepeatThatHandler,
     ResetAllVariablesHandler,
@@ -658,6 +923,6 @@ exports.handler = skillBuilder
     SessionEndedRequestHandler
   )
   .addErrorHandlers(ErrorHandler)
-  .withTableName('NightFighter')
+  .withTableName('AceFighter')
   .withAutoCreateTable(true)
   .lambda();
