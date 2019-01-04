@@ -2,6 +2,7 @@
 TODO: 
 
 - Mesquito special combat
+- Add burst modifiers
 
 */
 
